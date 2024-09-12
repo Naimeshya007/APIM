@@ -1,0 +1,44 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+# trigger:
+# - main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+
+  subscriptionId: 'f3d203d7-a878-4a98-889d-3db57315cfce'
+  clientId: '1f09b4a7-8667-47f5-8633-9f107d663d2d'
+  clientSecret: 'q~o8Q~WAMoewJ~Lw4zRTdtWOYCD7UeUlB4~yJcII'
+  tenantId: '47e64862-5797-4ed7-8df3-8e5a283bf109'
+  apimServiceName: 'NG-APIM'
+  resourceGroupName: 'NG-Test'
+  apiId: 'test-api'
+  apiPath: 'ng'
+  specificationFormat: 'OpenAPI'
+  specificationUrl: 'https://oxdhcentral-teams-api.azurewebsites.net/swagger/docs/v1/?format=json'
+
+steps:
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Install-Module -Name Az -Force -AllowClobber -Scope CurrentUser
+      Import-Module Az -Force
+      
+      $clientID = "$(clientId)"
+      $secureClientSecret = ConvertTo-SecureString $(clientSecret) -AsPlainText -Force
+      $pscredential = New-Object System.Management.Automation.PSCredential($clientID, $secureClientSecret)
+
+      Connect-AzAccount -ServicePrincipal -Tenant $(tenantId) -Credential $pscredential -Subscription $(subscriptionId)
+
+      $context = New-AzApiManagementContext -ResourceGroupName $(resourceGroupName) -ServiceName $(apimServiceName)
+
+      Import-AzApiManagementApi -Context $context -ApiId $(apiId) -SpecificationFormat $(specificationFormat) -SpecificationUrl $(specificationUrl) -Path $(apiPath)
+
+
+    
